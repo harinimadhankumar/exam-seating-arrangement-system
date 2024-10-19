@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Seating Allotment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            width: 120px;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .hall-summary {
+            margin-top: 10px;
+            font-style: italic;
+            color: #030303;
+            text-align: center;
+        }
+
+        .seating-plan-container {
+            margin-top: 20px;
+        }
+
+        h3 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body style="background-image: url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');background-size: cover;background-repeat: no-repeat;">
+    >
+    <div class="container" id="form-container">
+        <h1>Exam Seating Allotment</h1>
+
+        <!-- Form to input number of departments to combine -->
+        <form id="seating-form">
+            <div class="form-group">
+                <label for="num-departments">Number of Departments to Combine:</label>
+                <input type="number" id="num-departments" name="num-departments" min="2" max="5" required>
+            </div>
+
+            <div id="department-selects"></div>
+
+            <div class="form-group">
+                <label for="num-rows">Rows per Hall:</label>
+                <input type="number" id="num-rows" name="num-rows" required>
+            </div>
+
+            <div class="form-group">
+                <label for="num-cols">Columns per Hall:</label>
+                <input type="number" id="num-cols" name="num-cols" required>
+            </div>
+
+            <div class="form-group">
+                <label for="num-halls">Number of Halls:</label>
+                <input type="number" id="num-halls" name="num-halls" required>
+            </div>
+
+            <div class="form-group">
+                <label for="seating-order">Seating Order:</label>
+                <select id="seating-order" name="seating-order" required>
+                    <option value="row">Row Order</option>
+                    <option value="column">Column Order</option>
+                </select>
+            </div>
+
+            <button type="submit">Allocate Seats</button>
+        </form>
+    </div>
+
+    <div class="container" id="seating-plan-container" style="display: none;">
+        <h1>Seating Plan</h1>
+        <div id="seating-plan" class="seating-plan-container"></div>
+        <div id="seating-summary" class="summary"></div>
+    </div>
+
+    <script>
+        // Event listener to generate department fields based on the selected number
+        document.getElementById("num-departments").addEventListener("change", function () {
+            const numDepartments = parseInt(this.value);
+            const departmentSelects = document.getElementById("department-selects");
+            departmentSelects.innerHTML = ''; // Clear previous fields
+
+            // Dynamically create department and student number fields
+            for (let i = 1; i <= numDepartments; i++) {
+                const departmentDiv = document.createElement("div");
+                departmentDiv.classList.add("form-group");
+
+                const labelDept = document.createElement("label");
+                labelDept.textContent = `Select Department ${i}:`;
+                departmentDiv.appendChild(labelDept);
+
+                const selectDept = document.createElement("select");
+                selectDept.id = `dept-${i}`;
+                selectDept.name = `dept-${i}`;
+                selectDept.required = true;
+                selectDept.innerHTML = `
+                    <option value="">Select Department ${i}</option>
+                    <option value="Computer Engineering">Computer Engineering</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Electrical Engineering">Electrical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Chemical Engineering">Chemical Engineering</option>
+                    <option value="Biomedical Engineering">Biomedical Engineering</option>
+                `;
+                departmentDiv.appendChild(selectDept);
+
+                const labelStudents = document.createElement("label");
+                labelStudents.textContent = `Number of Students in Department ${i}:`;
+                departmentDiv.appendChild(labelStudents);
+
+                const inputStudents = document.createElement("input");
+                inputStudents.type = "number";
+                inputStudents.id = `num-students-d${i}`;
+                inputStudents.name = `num-students-d${i}`;
+                inputStudents.required = true;
+                departmentDiv.appendChild(inputStudents);
+
+                departmentSelects.appendChild(departmentDiv);
+            }
+        });
+
+        // Event listener for form submission
+        document.getElementById("seating-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            const numDepartments = parseInt(document.getElementById("num-departments").value);
+            const numRows = parseInt(document.getElementById("num-rows").value);
+            const numCols = parseInt(document.getElementById("num-cols").value);
+            const numHalls = parseInt(document.getElementById("num-halls").value);
+            const seatingOrder = document.getElementById("seating-order").value;
+
+            const departments = [];
+            let totalStudents = 0;
+
+            // Get department names and number of students dynamically
+            for (let i = 1; i <= numDepartments; i++) {
+                const deptName = document.getElementById(`dept-${i}`).value;
+                const numStudents = parseInt(document.getElementById(`num-students-d${i}`).value);
+                departments.push({ name: deptName, students: numStudents });
+                totalStudents += numStudents;
+            }
+
+            const totalSeats = numRows * numCols * numHalls;
+            if (totalStudents > totalSeats) {
+                alert("Not enough seats for all students.");
+                return;
+            }
+
+            // Generate seating plan dynamically based on the departments
+            let seatingPlan;
+            if (seatingOrder === "row") {
+                seatingPlan = allocateRowOrderSeats(departments, numRows, numCols, numHalls);
+            } else {
+                seatingPlan = allocateColumnOrderSeats(departments, numRows, numCols, numHalls);
+            }
+
+            // Hide form and display seating plan
+            document.getElementById("form-container").style.display = "none";
+            document.getElementById("seating-plan-container").style.display = "block";
+
+            // Display the seating plan
+            displaySeatingPlan(seatingPlan, departments);
+        });
+
+        // Function to allocate seats in row order
+        function allocateRowOrderSeats(departments, numRows, numCols, numHalls) {
+            const seatingPlan = [];
+            const studentIndices = departments.map(() => 1); // Track student indices for each department
+
+            for (let hall = 1; hall <= numHalls; hall++) {
+                const hallSeating = [];
+                for (let row = 0; row < numRows; row++) {
+                    const rowSeats = [];
+                    for (let col = 0; col < numCols; col++) {
+                        const deptIndex = (row + col) % departments.length;
+                        if (studentIndices[deptIndex] <= departments[deptIndex].students) {
+                            rowSeats.push(`${departments[deptIndex].name} ${studentIndices[deptIndex]}`);
+                            studentIndices[deptIndex]++;
+                        } else {
+                            rowSeats.push(""); // Empty seat if no more students in this department
+                        }
+                    }
+                    hallSeating.push(rowSeats);
+                }
+                seatingPlan.push(hallSeating);
+            }
+
+            return seatingPlan;
+        }
+
+        // Function to allocate seats in column order
+        function allocateColumnOrderSeats(departments, numRows, numCols, numHalls) {
+            const seatingPlan = [];
+            const studentIndices = departments.map(() => 1); // Track student indices for each department
+
+            for (let hall = 1; hall <= numHalls; hall++) {
+                const hallSeating = [];
+                for (let row = 0; row < numRows; row++) {
+                    const rowSeats = [];
+                    for (let col = 0; col < numCols; col++) {
+                        const deptIndex = (row + col) % departments.length;
+                        if (studentIndices[deptIndex] <= departments[deptIndex].students) {
+                            rowSeats.push(`${departments[deptIndex].name} ${studentIndices[deptIndex]}`);
+                            studentIndices[deptIndex]++;
+                        } else {
+                            rowSeats.push(""); // Empty seat if no more students in this department
+                        }
+                    }
+                    hallSeating.push(rowSeats);
+                }
+                seatingPlan.push(hallSeating);
+            }
+
+            return seatingPlan;
+        }
+
+        // Function to display the seating plan in the DOM
+        function displaySeatingPlan(seatingPlan, departments) {
+            const seatingPlanContainer = document.getElementById("seating-plan");
+            seatingPlanContainer.innerHTML = ''; // Clear previous plan
+
+            seatingPlan.forEach((hallSeating, index) => {
+                const hallDiv = document.createElement("div");
+                hallDiv.innerHTML = `<h3>Hall ${index + 1}</h3>`;
+
+                const table = document.createElement("table");
+
+                hallSeating.forEach(rowSeats => {
+                    const row = document.createElement("tr");
+                    rowSeats.forEach(seat => {
+                        const seatCell = document.createElement("td");
+                        seatCell.textContent = seat ? seat : "Empty";
+                        row.appendChild(seatCell);
+                    });
+                    table.appendChild(row);
+                });
+
+                hallDiv.appendChild(table);
+                seatingPlanContainer.appendChild(hallDiv);
+            });
+
+            const summary = `Total Students: ${departments.reduce((sum, dept) => sum + dept.students, 0)}.`;
+            document.getElementById("seating-summary").textContent = summary;
+        }
+    </script>
+</body>
+</html>
